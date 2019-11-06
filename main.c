@@ -32,8 +32,7 @@ bool packet_check(unsigned char *data) {
 	if(memcmp(tcp_data, "GET", 3) && memcmp(tcp_data, "POST", 4) && memcmp(tcp_data, "HEAD", 4) && memcmp(tcp_data, "PUT", 3) && memcmp(tcp_data, "DELETE", 6) && memcmp(tcp_data, "OPTIONS", 7))
 		return false;
 	for(int i = 0; i< tcp_data_len - 6; i++) {
-		if(!memcmp(tcp_data + i, "HOST: ", 6)) {
-			printf("\n---------------\n%s\n-------------\n",tcp_data+i+6);
+		if(!memcmp(tcp_data + i, "Host: ", 6)) {
 			if(!memcmp(tcp_data + i + 6, host, strlen(host)))
 				return true;
 			else
@@ -109,7 +108,6 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 	if(pkt_id.chk == true)
 	{
 		printf("Packet Drop success\n");
-		exit(1);
 		return nfq_set_verdict(qh, pkt_id.id, NF_DROP, 0, NULL);
 	}
 	else
@@ -124,10 +122,8 @@ int main(int argc, char **argv)
 	int fd;
 	int rv;
 	char buf[4096] __attribute__ ((aligned));
-	char * host;
 
 	host = argv[1];
-
 	printf("opening library handle\n");
 	h = nfq_open();
 	if (!h) {
