@@ -109,7 +109,6 @@ static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 	{
 		printf("Packet Drop success\n");
 		return nfq_set_verdict(qh, id.id, NF_DROP, 0, NULL);
-		exit(1);
 	}
 	else
 		return nfq_set_verdict(qh, id.id, NF_ACCEPT, 0, NULL);
