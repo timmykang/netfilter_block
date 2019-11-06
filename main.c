@@ -31,8 +31,9 @@ bool packet_check(unsigned char *data) {
 	tcp_data = data + ip_hdr_len + tcp_hdr_len;
 	if(memcmp(tcp_data, "GET", 3) && memcmp(tcp_data, "POST", 4) && memcmp(tcp_data, "HEAD", 4) && memcmp(tcp_data, "PUT", 3) && memcmp(tcp_data, "DELETE", 6) && memcmp(tcp_data, "OPTIONS", 7))
 		return false;
-	for(int i = 0; i< tcp_data_len; i++) {
+	for(int i = 0; i< tcp_data_len - 6; i++) {
 		if(!memcmp(tcp_data + i, "HOST: ", 6)) {
+			printf("\n---------------\n%s\n-------------\n",tcp_data+i+6);
 			if(!memcmp(tcp_data + i + 6, host, strlen(host)))
 				return true;
 			else
@@ -45,7 +46,7 @@ bool packet_check(unsigned char *data) {
 /* returns packet id*/
 static packet_id print_pkt (struct nfq_data *tb)
 {
-	int id = 0, len;
+	int len;
 	struct nfqnl_msg_packet_hdr *ph;
 	struct nfqnl_msg_packet_hw *hwph;
 	u_int32_t mark,ifi; 
@@ -54,7 +55,7 @@ static packet_id print_pkt (struct nfq_data *tb)
 
 	ph = nfq_get_msg_packet_hdr(tb);
 	if (ph) {
-		id = ntohl(ph->packet_id);
+		ret.id = ntohl(ph->packet_id);
 		printf("hw_protocol=0x%04x hook=%u id=%u ",
 			ntohs(ph->hw_protocol), ph->hook, ret.id);
 	}
@@ -103,15 +104,16 @@ static packet_id print_pkt (struct nfq_data *tb)
 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
 	      struct nfq_data *nfa, void *data)
 {
-	struct packet_id id = print_pkt(nfa);
-	//printf("entering callback\n");
-	if(id.chk == true)
+	struct packet_id pkt_id = print_pkt(nfa);
+	printf("entering callback\n");
+	if(pkt_id.chk == true)
 	{
 		printf("Packet Drop success\n");
-		return nfq_set_verdict(qh, id.id, NF_DROP, 0, NULL);
+		exit(1);
+		return nfq_set_verdict(qh, pkt_id.id, NF_DROP, 0, NULL);
 	}
 	else
-		return nfq_set_verdict(qh, id.id, NF_ACCEPT, 0, NULL);
+		return nfq_set_verdict(qh, pkt_id.id, NF_ACCEPT, 0, NULL);
 }
 
 int main(int argc, char **argv)
